@@ -1,0 +1,28 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Register — CampusCare</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body class="auth-page" data-page="register">
+  <main class="auth-card">
+    <a class="brand" href="index.html" aria-label="CampusCare home"><img class="brand-logo" src="assets/campuscare-logo.png" alt=""><span class="brand-title">CampusCare</span></a>
+    <h1>Create your account</h1>
+    <p class="subtle">Register as a student or faculty member to submit and track campus complaints.</p>
+    <form id="registerForm" class="form-stack">
+      <div class="field"><label for="name">Full name</label><input id="name" required autocomplete="name" placeholder="Your name"></div>
+      <div class="field"><label for="identifier">Roll / Employee ID</label><input id="identifier" required autocomplete="username" placeholder="e.g. 23CSE101 or FAC-18"></div>
+      <div class="field"><label for="registerEmail">Email</label><input id="registerEmail" type="email" required autocomplete="email" placeholder="you@college.edu"></div>
+      <div class="field"><label for="role">Account type</label><select id="role" required><option value="student">Student</option><option value="faculty">Faculty</option></select></div>
+      <div class="field"><label for="registerPassword">Password</label><input id="registerPassword" type="password" minlength="6" required autocomplete="new-password" placeholder="At least 6 characters"></div>
+      <div class="field"><label for="confirmPassword">Confirm password</label><input id="confirmPassword" type="password" minlength="6" required autocomplete="new-password" placeholder="Repeat password"></div>
+      <button class="button" type="submit">Create account</button>
+    </form>
+    <div id="formMessage" class="form-message" role="alert"></div>
+    <p class="auth-switch">Already registered? <a href="login.html">Log in</a></p>
+  </main>
+  <script src="script.js" defer></script>
+</body>
+</html>

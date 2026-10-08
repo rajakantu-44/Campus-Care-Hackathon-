@@ -1,0 +1,21 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>My Complaints — CampusCare</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body data-page="track">
+  <header class="app-header"><div class="header-inner"><a class="brand" href="complaint.html" aria-label="CampusCare complaints"><img class="brand-logo" src="assets/campuscare-logo.png" alt=""><span class="brand-title">CampusCare</span></a><nav id="appNav" class="app-nav" aria-label="Account navigation"></nav></div></header>
+  <main class="page-shell">
+    <section class="page-heading"><div><h1>My complaints</h1><p>View the live status of every complaint submitted from your account.</p></div></section>
+    <section class="content-card">
+      <div class="section-title"><h2>Complaint history</h2><span id="trackedComplaintCount"></span></div>
+      <div id="trackingResult" class="complaint-list"></div>
+    </section>
+  </main>
+  <div id="toast" class="toast" role="status"></div>
+  <script src="script.js" defer></script>
+</body>
+</html>

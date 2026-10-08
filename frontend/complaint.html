@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Complaint — CampusCare</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body data-page="complaint">
+  <header class="app-header"><div class="header-inner"><a class="brand" href="complaint.html" aria-label="CampusCare complaints"><img class="brand-logo" src="assets/campuscare-logo.png" alt=""><span class="brand-title">CampusCare</span></a><nav id="appNav" class="app-nav" aria-label="Account navigation"></nav></div></header>
+  <main class="page-shell">
+    <section id="complaintFormView">
+      <div class="page-heading"><div><h1>Report a campus issue</h1><p>Give enough detail for the right department to act quickly.</p></div></div>
+      
+      <div class="form-layout">
+        <section class="content-card form-panel">
+          <form id="complaintForm" enctype="multipart/form-data">
+            <div class="form-grid two-columns">
+              <div class="field"><label for="complaintTitle">Complaint title</label><input id="complaintTitle" name="title" required maxlength="120" placeholder="e.g. Projector not working"></div>
+              <div class="field"><label for="category">Category</label><select id="category" name="category" required><option value="Infrastructure">Infrastructure</option><option value="IT & Network">IT &amp; Network</option><option value="Cleanliness">Cleanliness</option><option value="Safety">Safety</option><option value="Student Services">Student Services</option><option value="Other">Other</option></select></div>
+              <div class="field"><label for="location">Location</label><input id="location" name="location" required maxlength="150" placeholder="e.g. Block A — Room 204"></div>
+              <div class="field"><label for="priority">Priority</label><select id="priority" name="priority"><option value="Low">Low</option><option value="Medium" selected>Medium</option><option value="High">High</option><option value="Critical">Critical</option></select></div>
+            </div>
+            <div class="field"><label for="description">Describe the problem</label><textarea id="description" name="description" required maxlength="2000" placeholder="What happened? Include useful details such as room number or when the issue occurred."></textarea></div>
+            <div class="field"><label for="image">Add an image <span class="subtle">(optional)</span></label><input id="image" name="image" type="file" accept=".jpg,.jpeg,.png,.webp,image/jpeg,image/png,image/webp"><small class="file-note">JPG, JPEG, PNG or WEBP · maximum 5 MB</small><img id="imagePreview" class="image-preview hidden" alt="Selected image preview"></div>
+            <div class="form-actions"><button class="button" type="submit">Submit complaint</button><span class="subtle">You can track its status after submitting.</span></div>
+          </form>
+          <div id="formMessage" class="form-message" role="alert"></div>
+        </section>
+        <aside class="recommendation"><strong>Smart recommendation</strong><p class="subtle">Based on the title, description and category.</p><div class="recommendation-values"><span id="suggestDepartment">Department: General Administration</span><span id="suggestPriority">Priority: Medium</span></div></aside>
+      </div>
+    </section>
+    <section id="complaintDetailView" class="hidden"></section>
+  </main>
+  <div id="toast" class="toast" role="status"></div>
+  <script src="script.js" defer></script>
+</body>
+</html>
