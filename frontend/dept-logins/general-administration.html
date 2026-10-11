@@ -1,0 +1,24 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>General Administration Login — CampusCare</title>
+  <link rel="stylesheet" href="../style.css">
+</head>
+<body class="auth-page" data-page="department-login" data-department="General Administration">
+  <main class="auth-card">
+    <a class="brand" href="../index.html" aria-label="CampusCare home"><img class="brand-logo" src="../assets/campuscare-logo.png" alt=""><span class="brand-title">CampusCare</span></a>
+    <h1>General Administration login</h1>
+    <p class="subtle">Sign in to view and resolve complaints assigned to General Administration. Admin-001 can also use the Admin-001 credentials to access this dashboard.</p>
+    <form id="loginForm" class="form-stack">
+      <div class="field"><label for="loginIdentifier">Roll / Employee ID or email</label><input id="loginIdentifier" type="text" autocomplete="username" required placeholder="e.g. 23CSE101"></div>
+      <div class="field"><label for="loginPassword">Password</label><input id="loginPassword" type="password" autocomplete="current-password" required placeholder="Your password"></div>
+      <button class="button" type="submit">Log in</button>
+    </form>
+    <div id="formMessage" class="form-message" role="alert"></div>
+    <p class="auth-switch"><a href="index.html">Choose another department</a></p>
+  </main>
+  <script src="../script.js" defer></script>
+</body>
+</html>

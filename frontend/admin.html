@@ -18,13 +18,26 @@
       <div class="stat-card"><div class="stat-label">Resolved</div><div id="statResolved" class="stat-value">—</div></div>
     </section>
     <section class="content-card">
+      <div class="section-title"><h2>Department account access</h2><span>Admin-001</span></div>
+      <p class="subtle">Open any department login and use the Admin-001 credentials to access its scoped dashboard.</p>
+      <div class="flow-list">
+        <a class="flow-item" href="dept-logins/maintenance.html"><strong>Maintenance</strong><span>Open Maintenance login</span></a>
+        <a class="flow-item" href="dept-logins/it.html"><strong>IT</strong><span>Open IT login</span></a>
+        <a class="flow-item" href="dept-logins/student-affairs.html"><strong>Student Affairs</strong><span>Open Student Affairs login</span></a>
+        <a class="flow-item" href="dept-logins/housekeeping.html"><strong>Housekeeping</strong><span>Open Housekeeping login</span></a>
+        <a class="flow-item" href="dept-logins/general-administration.html"><strong>General Administration</strong><span>Open General Administration login</span></a>
+      </div>
+    </section>
+    <section class="content-card">
       <div class="section-title"><h2>Promote an account</h2><span>Admin only</span></div>
-      <p class="subtle">Enter the roll/employee ID or email of an existing student or faculty account to grant admin access.</p>
-      <form id="promotionForm" class="form-actions">
+      <p class="subtle">Assign an existing student or faculty account to manage one department.</p>
+      <form id="promotionForm" class="form-actions" novalidate>
         <input id="promotionIdentifier" class="filter-control" required placeholder="Roll / Employee ID or email" aria-label="Account to promote">
-        <button class="button" type="submit">Make admin</button>
+        <select id="promotionDepartment" class="filter-control" required aria-label="Department"><option value="">Choose department</option><option>Maintenance</option><option>IT</option><option>Student Affairs</option><option>Housekeeping</option><option>General Administration</option></select>
+        <button class="button" type="submit">Assign department admin</button>
+        <button id="removeAdminButton" class="button button-danger" type="button" hidden>Remove as admin</button>
       </form>
-      <div id="promotionMessage" class="form-message" role="alert"></div>
+      <div id="promotionMessage" class="form-message" role="status" aria-live="polite"></div>
     </section>
     <section class="admin-layout">
       <section class="content-card admin-list-panel">

@@ -22,6 +22,7 @@
               <div class="field"><label for="priority">Priority</label><select id="priority" name="priority"><option value="Low">Low</option><option value="Medium" selected>Medium</option><option value="High">High</option><option value="Critical">Critical</option></select></div>
             </div>
             <div class="field"><label for="description">Describe the problem</label><textarea id="description" name="description" required maxlength="2000" placeholder="What happened? Include useful details such as room number or when the issue occurred."></textarea></div>
+            <div class="field"><label class="checkbox-row"><input id="anonymous" name="anonymous" type="checkbox" value="true"><span>Send anonymously</span></label><small>Your name and roll number will be hidden from department administrators. Admin-001 can still access them.</small></div>
             <div class="field"><label for="image">Add an image <span class="subtle">(optional)</span></label><input id="image" name="image" type="file" accept=".jpg,.jpeg,.png,.webp,image/jpeg,image/png,image/webp"><small class="file-note">JPG, JPEG, PNG or WEBP · maximum 5 MB</small><img id="imagePreview" class="image-preview hidden" alt="Selected image preview"></div>
             <div class="form-actions"><button class="button" type="submit">Submit complaint</button><span class="subtle">You can track its status after submitting.</span></div>
           </form>

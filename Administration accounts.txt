@@ -1,0 +1,8 @@
+| Account | Login ID | Password |
+|---|---|---|
+| Admin | `Admin-001` | `Admin@123` |
+| Maintenance | `MAINT-001` | `Maintenance@123` |
+| IT | `IT-001` | `IT@123` |
+| Student Affairs | `STUAFF-001` | `StudentAffairs@123` |
+| Housekeeping | `HOUSEKEEP-001` | `Housekeeping@123` |
+| General Administration | `GENADMIN-001` | `GeneralAdministration@123` |

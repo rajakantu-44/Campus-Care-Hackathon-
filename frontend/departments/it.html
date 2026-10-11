@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>IT Dashboard — CampusCare</title>
+  <link rel="stylesheet" href="../style.css">
+</head>
+<body data-page="department" data-department="IT">
+  <header class="app-header"><div class="header-inner"><a class="brand" href="it.html" aria-label="CampusCare department dashboard"><img class="brand-logo" src="../assets/campuscare-logo.png" alt=""><span class="brand-title">CampusCare</span></a><nav id="appNav" class="app-nav" aria-label="Account navigation"></nav></div></header>
+  <main class="page-shell">
+    <section class="page-heading"><div><h1 id="dashboardHeading">Department dashboard</h1><p>Review and resolve complaints assigned to your department.</p></div></section>
+    <section class="stats-grid" aria-label="Complaint statistics">
+      <div class="stat-card"><div class="stat-label">Total</div><div id="statTotal" class="stat-value">—</div></div>
+      <div class="stat-card"><div class="stat-label">Pending</div><div id="statPending" class="stat-value">—</div></div>
+      <div class="stat-card"><div class="stat-label">Under review</div><div id="statReview" class="stat-value">—</div></div>
+      <div class="stat-card"><div class="stat-label">In progress</div><div id="statProgress" class="stat-value">—</div></div>
+      <div class="stat-card"><div class="stat-label">Resolved</div><div id="statResolved" class="stat-value">—</div></div>
+    </section>
+    <section class="admin-layout">
+      <section class="content-card admin-list-panel">
+        <div class="section-title"><h2>All complaints</h2><span id="adminComplaintCount"></span></div>
+        <div class="toolbar">
+          <input id="searchInput" class="filter-control" type="search" placeholder="Search ID, title or location">
+          <select id="statusFilter" class="filter-control"><option value="">All statuses</option><option>Submitted</option><option>Under Review</option><option>In Progress</option><option>Resolved</option></select>
+          <select id="categoryFilter" class="filter-control"><option value="">All categories</option><option>Infrastructure</option><option>IT &amp; Network</option><option>Cleanliness</option><option>Safety</option><option>Student Services</option><option>Other</option></select>
+          <select id="priorityFilter" class="filter-control"><option value="">All priorities</option><option>Low</option><option>Medium</option><option>High</option><option>Critical</option></select>
+        </div>
+        <div id="adminComplaintList" class="admin-table"></div>
+      </section>
+      <aside id="adminEditor" class="content-card admin-editor">
+        <div class="section-title"><h2>Update complaint</h2><button id="closeEditor" class="button button-secondary button-small" type="button">Close</button></div>
+        <div id="editorSummary" class="editor-summary">Select a complaint to manage it.</div>
+        <form id="adminUpdateForm" class="form-stack">
+          <div class="field"><label for="updateStatus">Status</label><select id="updateStatus"><option>Submitted</option><option>Under Review</option><option>In Progress</option><option>Resolved</option></select></div>
+          <div class="field"><label for="updateDepartment">Department</label><input id="updateDepartment" required maxlength="100"></div>
+          <div class="field"><label for="updatePriority">Priority</label><select id="updatePriority"><option>Low</option><option>Medium</option><option>High</option><option>Critical</option></select></div>
+          <div class="field"><label for="updateNote">Resolution remarks</label><textarea id="updateNote" maxlength="2000" placeholder="Explain the action taken or next step."></textarea></div>
+          <button class="button" type="submit">Save update</button>
+        </form>
+        <div id="formMessage" class="form-message" role="alert"></div>
+      </aside>
+    </section>
+  </main>
+  <div id="toast" class="toast" role="status"></div>
+  <script src="../script.js" defer></script>
+</body>
+</html>

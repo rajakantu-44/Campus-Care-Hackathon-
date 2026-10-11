@@ -102,6 +102,12 @@ body[data-page="home"] { background: url("assets/brown-pastel-aesthetic-379r48zf
 .field input, .field select, .field textarea, .filter-control {
   background: white; border: 1px solid #cddae2; border-radius: 8px; color: var(--ink); min-height: 40px; outline: none; padding: 8px 10px; width: 100%;
 }
+.password-input-wrap { position: relative; width: 100%; }
+.password-input-wrap input { padding-right: 46px; }
+.password-toggle { align-items: center; background: transparent; border: 0; border-radius: 6px; color: var(--muted); display: inline-flex; height: 34px; justify-content: center; padding: 5px; position: absolute; right: 5px; top: 50%; transform: translateY(-50%); width: 34px; }
+.password-toggle:hover { color: var(--brand-dark); }
+.password-toggle:focus-visible { outline: 2px solid var(--brand); outline-offset: 1px; }
+.password-toggle svg { height: 20px; width: 20px; }
 .field textarea { min-height: 105px; resize: vertical; }.field input:focus, .field select:focus, .field textarea:focus, .filter-control:focus { border-color: var(--brand); box-shadow: 0 0 0 3px rgba(23,107,135,.12); }
 .field small { color: var(--muted); }.checkbox-row { align-items: center; display: flex; gap: 9px; }.checkbox-row input { accent-color: var(--brand); height: 17px; width: 17px; }
 .form-message { border-radius: 8px; display: none; font-size: .91rem; margin-top: 17px; padding: 10px 12px; }.form-message.show { display: block; }.form-message.error { background: #fff0f0; color: #992f2f; }.form-message.success { background: #e8f7ee; color: #126740; }
@@ -169,6 +175,7 @@ body > * { position: relative; z-index: 1; }
 .button-secondary { background: rgba(254, 243, 226, .72); border-color: rgba(42, 26, 14, .16); box-shadow: none; color: var(--ink); }
 .button-secondary:hover { background: rgba(244, 174, 82, .26); box-shadow: 0 7px 15px rgba(42, 26, 14, .09); }
 .button-danger { background: rgba(254, 243, 226, .75); border-color: rgba(178, 73, 34, .35); color: var(--danger); }
+#removeAdminButton[hidden], #promotionForm button[hidden] { display: none !important; }
 
 .hero::before { background: linear-gradient(135deg, rgba(254, 243, 226, .84), rgba(254, 243, 226, .3)); border: 1px solid rgba(254, 243, 226, .78); border-radius: 28px; box-shadow: var(--shadow); content: ""; inset: 22px 0 0; position: absolute; z-index: -1; }
 .hero::after { background: linear-gradient(135deg, rgba(244, 174, 82, 0), rgba(212, 97, 26, 0)); filter: blur(1px); opacity: .8; }
@@ -190,6 +197,24 @@ body > * { position: relative; z-index: 1; }
 .flow-item:nth-child(2), .stat-card:nth-child(2), .content-card:nth-child(2) { animation-delay: .08s; }
 .flow-item:nth-child(3), .stat-card:nth-child(3), .content-card:nth-child(3) { animation-delay: .16s; }
 @keyframes page-enter { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: translateY(0); } }
+
+/* Keep status colors consistent across student, admin, and department pages. */
+.status-submitted, .status-select.status-submitted { background: #fef3c7; border-color: #f4cf5c; color: #854d0e; }
+.status-under-review, .status-select.status-under-review { background: #fde68a; border-color: #eabf3c; color: #854d0e; }
+.status-in-progress, .status-select.status-in-progress { background: #fcd34d; border-color: #dcae28; color: #713f12; }
+.status-resolved, .status-select.status-resolved { background: #dcfce7; border-color: #86d19b; color: #166534; }
+.status-select option.status-submitted { background: #fef3c7; color: #854d0e; }
+.status-select option.status-under-review { background: #fde68a; color: #854d0e; }
+.status-select option.status-in-progress { background: #fcd34d; color: #713f12; }
+.status-select option.status-resolved { background: #dcfce7; color: #166534; }
+.timeline-item[data-status="Submitted"] .timeline-dot { background: #fef3c7; border-color: #f4cf5c; }
+.timeline-item[data-status="Under Review"] .timeline-dot { background: #fde68a; border-color: #eabf3c; }
+.timeline-item[data-status="In Progress"] .timeline-dot { background: #fcd34d; border-color: #dcae28; }
+.timeline-item[data-status="Resolved"] .timeline-dot { background: #dcfce7; border-color: #86d19b; }
+.timeline-item[data-status="Submitted"] .timeline-label { color: #854d0e; }
+.timeline-item[data-status="Under Review"] .timeline-label { color: #854d0e; }
+.timeline-item[data-status="In Progress"] .timeline-label { color: #713f12; }
+.timeline-item[data-status="Resolved"] .timeline-label { color: #166534; }
 @media (prefers-reduced-motion: reduce) {
   html { scroll-behavior: auto; }
   *, *::before, *::after { animation-duration: .01ms !important; scroll-behavior: auto !important; transition-duration: .01ms !important; }

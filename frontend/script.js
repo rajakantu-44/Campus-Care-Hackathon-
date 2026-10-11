@@ -1,9 +1,32 @@
 // CampusCare's entire browser-side behavior lives here so the HTML/CSS can be redesigned freely.
-const API_BASE = "http://localhost:5000/api";
+const API_BASE = "http://127.0.0.1:5001/api";
 const BACKEND_BASE = API_BASE.replace(/\/api$/, "");
 let currentUser = readStoredUser();
 let adminComplaints = [];
 let selectedComplaintId = null;
+let adminDepartmentScope = null;
+
+const DEPARTMENT_SLUGS = {
+  "Maintenance": "maintenance",
+  "IT": "it",
+  "Student Affairs": "student-affairs",
+  "Housekeeping": "housekeeping",
+  "General Administration": "general-administration",
+};
+
+function departmentDashboardUrl(department) {
+  const slug = DEPARTMENT_SLUGS[department];
+  return appPageUrl(slug ? `departments/${slug}.html` : "departments/index.html");
+}
+
+function departmentLoginUrl(department) {
+  const slug = DEPARTMENT_SLUGS[department];
+  return appPageUrl(slug ? `dept-logins/${slug}.html` : "dept-logins/index.html");
+}
+
+function appPageUrl(path) {
+  return ["department", "department-login"].includes(document.body.dataset.page) ? `../${path}` : path;
+}
 
 function readStoredUser() {
   try { return JSON.parse(localStorage.getItem("cc_user")); } catch { return null; }
@@ -31,7 +54,9 @@ async function api(path, options = {}) {
   const data = await response.json().catch(() => ({}));
   if (!response.ok) {
     if (response.status === 401 && document.body.dataset.page !== "login") clearSession();
-    throw new Error(data.error || "Something went wrong. Please try again.");
+    const error = new Error(data.error || "Something went wrong. Please try again.");
+    error.status = response.status;
+    throw error;
   }
   return data;
 }
@@ -41,6 +66,23 @@ function escapeHtml(value = "") {
 }
 
 function statusClass(status) { return `status-${String(status).toLowerCase().replaceAll(" ", "-")}`; }
+const STATUS_CLASSES = ["status-submitted", "status-under-review", "status-in-progress", "status-resolved"];
+function syncStatusSelect(select) {
+  select.classList.add("status-select");
+  select.classList.remove(...STATUS_CLASSES);
+  const nextClass = statusClass(select.value);
+  if (STATUS_CLASSES.includes(nextClass)) select.classList.add(nextClass);
+}
+function initializeStatusSelects() {
+  document.querySelectorAll("#statusFilter, #updateStatus").forEach(select => {
+    [...select.options].forEach(option => {
+      const optionClass = statusClass(option.value || option.textContent.trim());
+      if (STATUS_CLASSES.includes(optionClass)) option.classList.add(optionClass);
+    });
+    syncStatusSelect(select);
+    select.addEventListener("change", () => syncStatusSelect(select));
+  });
+}
 function priorityClass(priority) { return `priority-${String(priority).toLowerCase()}`; }
 function formatDate(value) { return value ? new Intl.DateTimeFormat(undefined, { dateStyle: "medium" }).format(new Date(value)) : "—"; }
 
@@ -68,13 +110,13 @@ function showToast(message) {
 function renderNavigation() {
   const nav = document.getElementById("appNav");
   if (!nav || !currentUser) return;
-  const navigation = currentUser.role === "admin"
-    ? `<a class="button button-secondary button-small" href="dashboard.html">Dashboard</a>`
+  const navigation = currentUser.role === "admin" || currentUser.role === "department_admin"
+    ? `<a class="button button-secondary button-small" href="${currentUser.role === "admin" ? appPageUrl("dashboard.html") : departmentDashboardUrl(currentUser.department)}">Dashboard</a>`
     : `<a class="button button-secondary button-small" href="complaint.html">Complaint</a><a class="button button-secondary button-small" href="track.html">Track</a>`;
   nav.innerHTML = `<span class="nav-user">${escapeHtml(currentUser.name)}</span>${navigation}<button id="logoutButton" class="button button-small" type="button">Log out</button>`;
   document.getElementById("logoutButton").addEventListener("click", () => {
     clearSession();
-    window.location.href = "index.html";
+    window.location.href = appPageUrl("index.html");
   });
 }
 
@@ -84,14 +126,18 @@ async function requireUser(allowedRoles) {
     currentUser = data.user;
     localStorage.setItem("cc_user", JSON.stringify(data.user));
     if (!allowedRoles.includes(currentUser.role)) {
-      window.location.replace(currentUser.role === "admin" ? "dashboard.html" : "complaint.html");
+      window.location.replace(currentUser.role === "admin" ? "dashboard.html" : currentUser.role === "department_admin" ? departmentDashboardUrl(currentUser.department) : "complaint.html");
       return null;
     }
     renderNavigation();
     return currentUser;
   } catch (_error) {
     clearSession();
-    window.location.replace("login.html");
+    const page = document.body.dataset.page;
+    const fallbackLogin = page === "department"
+      ? departmentLoginUrl(document.body.dataset.department)
+      : page === "admin" ? "admin-login.html" : "login.html";
+    window.location.replace(fallbackLogin);
     return null;
   }
 }
@@ -119,13 +165,30 @@ function recommendationFor(text, category) {
 
 function initializeLogin() {
   const form = document.getElementById("loginForm");
+  const loginPage = document.body.dataset.page;
+  const expectedDepartment = document.body.dataset.department;
   form.addEventListener("submit", async event => {
     event.preventDefault();
     clearMessage();
     try {
       const data = await api("/login", { method: "POST", body: JSON.stringify({ identifier: document.getElementById("loginIdentifier").value, password: document.getElementById("loginPassword").value }) });
+      if (loginPage === "admin-login" && !data.user.is_super_admin) throw new Error("This login is for Admin-001.");
+      const adminDepartmentLogin = loginPage === "department-login" && data.user.is_super_admin;
+      if (loginPage === "department-login" && !adminDepartmentLogin && (data.user.role !== "department_admin" || data.user.department !== expectedDepartment)) {
+        throw new Error(`Use the ${expectedDepartment} department login for that account.`);
+      }
+      if (loginPage === "login" && (data.user.role === "admin" || data.user.role === "department_admin")) {
+        const message = data.user.role === "department_admin"
+          ? `This account is assigned to ${data.user.department}. Use that department's login page.`
+          : "Use the dedicated Admin-001 login page for this account.";
+        throw new Error(message);
+      }
       saveSession(data.access_token, data.user);
-      window.location.href = data.user.role === "admin" ? "dashboard.html" : "complaint.html";
+      if (adminDepartmentLogin) {
+        window.location.href = `${departmentDashboardUrl(expectedDepartment)}?adminAccess=1`;
+        return;
+      }
+      window.location.href = data.user.role === "admin" ? "dashboard.html" : data.user.role === "department_admin" ? departmentDashboardUrl(data.user.department) : "complaint.html";
     } catch (error) { showMessage(error.message); }
   });
 }
@@ -173,7 +236,7 @@ async function initializeDashboard() {
 }
 
 function detailMarkup(complaint) {
-  const timeline = complaint.timeline.map(item => `<div class="timeline-item ${item.state}"><span class="timeline-dot"></span><span class="timeline-label">${escapeHtml(item.label)}</span></div>`).join("");
+  const timeline = complaint.timeline.map(item => `<div class="timeline-item ${item.state}" data-status="${escapeHtml(item.label)}"><span class="timeline-dot"></span><span class="timeline-label">${escapeHtml(item.label)}</span></div>`).join("");
   const image = complaint.image_url ? `<img class="complaint-image" src="${BACKEND_BASE}${encodeURI(complaint.image_url)}" alt="Attachment for ${escapeHtml(complaint.title)}">` : "";
   const note = complaint.resolution_note ? `<div class="resolution-note">${escapeHtml(complaint.resolution_note)}</div>` : `<p class="subtle">No resolution remarks have been added yet.</p>`;
   return `<div class="page-heading"><div><a class="subtle" href="complaint.html">← Submit another complaint</a><h1>Complaint details</h1><p>Track the latest action on your report.</p></div></div>
@@ -249,13 +312,13 @@ function adminRow(complaint) {
     : `<span class="subtle">No resolution remarks yet.</span>`;
   return `<article class="admin-row" data-complaint-row="${escapeHtml(complaint.complaint_id)}">
     <button class="admin-row-summary" type="button" data-expand-id="${escapeHtml(complaint.complaint_id)}" aria-expanded="false">
-      <span class="complaint-code">${escapeHtml(complaint.complaint_id)}</span><h3>${escapeHtml(complaint.title)}</h3><span class="admin-row-meta">${escapeHtml(complaint.category)} · ${escapeHtml(complaint.location)} · ${escapeHtml(complaint.submitted_by)}</span>
+      <span class="complaint-code">${escapeHtml(complaint.complaint_id)}</span><h3>${escapeHtml(complaint.title)}</h3><span class="admin-row-meta">${escapeHtml(complaint.category)} · ${escapeHtml(complaint.location)} · ${escapeHtml(complaint.submitted_by)}${complaint.submitted_roll_or_employee_id ? ` · ID ${escapeHtml(complaint.submitted_roll_or_employee_id)}` : ""}</span>
     </button>
     <div class="admin-row-meta">${escapeHtml(complaint.department)}<br>${formatDate(complaint.created_at)}</div>
     <div class="admin-row-actions"><span class="badge ${priorityClass(complaint.priority)}">${escapeHtml(complaint.priority)}</span><span class="badge ${statusClass(complaint.status)}">${escapeHtml(complaint.status)}</span><button class="button button-secondary button-small" type="button" data-manage-id="${escapeHtml(complaint.complaint_id)}">Manage</button></div>
     <div class="admin-expanded" id="admin-details-${escapeHtml(complaint.complaint_id)}">
       <p class="admin-description">${escapeHtml(complaint.description)}</p>
-      <div class="admin-detail-grid"><div>Category<strong>${escapeHtml(complaint.category)}</strong></div><div>Location<strong>${escapeHtml(complaint.location)}</strong></div><div>Department<strong>${escapeHtml(complaint.department)}</strong></div><div>Priority<strong>${escapeHtml(complaint.priority)}</strong></div><div>Status<strong>${escapeHtml(complaint.status)}</strong></div><div>Submitted<strong>${formatDate(complaint.created_at)}</strong></div></div>
+      <div class="admin-detail-grid"><div>Category<strong>${escapeHtml(complaint.category)}</strong></div><div>Location<strong>${escapeHtml(complaint.location)}</strong></div><div>Department<strong>${escapeHtml(complaint.department)}</strong></div><div>Priority<strong>${escapeHtml(complaint.priority)}</strong></div><div>Status<strong>${escapeHtml(complaint.status)}</strong></div><div>Submitted<strong>${formatDate(complaint.created_at)}</strong></div>${complaint.submitted_roll_or_employee_id ? `<div>Reporter roll / employee ID<strong>${escapeHtml(complaint.submitted_roll_or_employee_id)}</strong></div>` : ""}</div>
       <div class="admin-detail-section"><span>Resolution remarks</span>${note}</div>
       <div class="admin-detail-section"><span>Attached image</span>${image}</div>
     </div>
@@ -267,7 +330,11 @@ async function loadAdmin() {
   const filterMap = [["search", "searchInput"], ["status", "statusFilter"], ["category", "categoryFilter"], ["priority", "priorityFilter"]];
   filterMap.forEach(([key, id]) => { const value = document.getElementById(id).value.trim(); if (value) params.set(key, value); });
   try {
-    const [stats, data] = await Promise.all([api("/admin/stats"), api(`/admin/complaints${params.toString() ? `?${params}` : ""}`)]);
+    const isDepartmentAdmin = currentUser.role === "department_admin" || Boolean(adminDepartmentScope);
+    const base = isDepartmentAdmin ? "/department" : "/admin";
+    if (adminDepartmentScope) params.set("department", adminDepartmentScope);
+    const query = params.toString();
+    const [stats, data] = await Promise.all([api(`${base}/stats${adminDepartmentScope ? `?department=${encodeURIComponent(adminDepartmentScope)}` : ""}`), api(`${base}/complaints${query ? `?${query}` : ""}`)]);
     document.getElementById("statTotal").textContent = stats.total;
     document.getElementById("statPending").textContent = stats.pending;
     document.getElementById("statReview").textContent = stats.under_review;
@@ -286,6 +353,7 @@ function openEditor(complaintId) {
   document.getElementById("adminEditor").classList.add("show");
   document.getElementById("editorSummary").innerHTML = `<strong>${escapeHtml(complaint.complaint_id)}</strong> · ${escapeHtml(complaint.title)}<br><span class="subtle">${escapeHtml(complaint.description)}</span>`;
   document.getElementById("updateStatus").value = complaint.status;
+  syncStatusSelect(document.getElementById("updateStatus"));
   document.getElementById("updateDepartment").value = complaint.department;
   document.getElementById("updatePriority").value = complaint.priority;
   document.getElementById("updateNote").value = complaint.resolution_note || "";
@@ -294,8 +362,29 @@ function openEditor(complaintId) {
 }
 
 async function initializeAdmin() {
-  const user = await requireUser(["admin"]);
+  const user = await requireUser(["admin", "department_admin"]);
   if (!user) return;
+  const isDepartmentAdmin = user.role === "department_admin";
+  const isSuperAdmin = user.is_super_admin;
+  const isDepartmentPage = document.body.dataset.page === "department";
+  const adminRequestedDepartment = new URLSearchParams(window.location.search).get("adminAccess") === "1";
+  const isAdminDepartmentView = isSuperAdmin && isDepartmentPage && adminRequestedDepartment;
+  if (!isDepartmentAdmin && !user.is_super_admin) { window.location.replace("login.html"); return; }
+  if (document.body.dataset.page === "admin" && isDepartmentAdmin) { window.location.replace(departmentDashboardUrl(user.department)); return; }
+  if (isDepartmentPage && !isDepartmentAdmin && !isAdminDepartmentView) { window.location.replace("dashboard.html"); return; }
+  const expectedDepartment = document.body.dataset.department;
+  if (isDepartmentAdmin && expectedDepartment && user.department !== expectedDepartment) {
+    window.location.replace(departmentDashboardUrl(user.department));
+    return;
+  }
+  if (isAdminDepartmentView) adminDepartmentScope = expectedDepartment;
+  if (isDepartmentAdmin) {
+    document.getElementById("dashboardHeading").textContent = `${user.department} dashboard`;
+    document.getElementById("updateDepartment").disabled = true;
+  } else if (isAdminDepartmentView) {
+    document.getElementById("dashboardHeading").textContent = `${expectedDepartment} dashboard — Admin access`;
+    document.getElementById("updateDepartment").disabled = true;
+  }
   const list = document.getElementById("adminComplaintList");
   list.addEventListener("click", event => {
     const manageButton = event.target.closest("[data-manage-id]");
@@ -321,36 +410,163 @@ async function initializeAdmin() {
     if (!selectedComplaintId) return;
     clearMessage();
     try {
-      await api(`/admin/complaints/${encodeURIComponent(selectedComplaintId)}`, { method: "PUT", body: JSON.stringify({
+      const updates = {
         status: document.getElementById("updateStatus").value,
-        department: document.getElementById("updateDepartment").value,
         priority: document.getElementById("updatePriority").value,
         resolution_note: document.getElementById("updateNote").value,
-      }) });
+      };
+      if (!isDepartmentAdmin && !isAdminDepartmentView) updates.department = document.getElementById("updateDepartment").value;
+      await api(`/admin/complaints/${encodeURIComponent(selectedComplaintId)}`, { method: "PUT", body: JSON.stringify(updates) });
       showToast("Complaint updated.");
       await loadAdmin();
       openEditor(selectedComplaintId);
     } catch (error) { showMessage(error.message); }
   });
-  document.getElementById("promotionForm").addEventListener("submit", async event => {
-    event.preventDefault();
-    clearMessage("promotionMessage");
-    const identifier = document.getElementById("promotionIdentifier").value.trim();
-    try {
-      const data = await api(`/admin/users/${encodeURIComponent(identifier)}/promote`, { method: "PUT" });
-      showMessage(data.message, "success", "promotionMessage");
-      event.currentTarget.reset();
-    } catch (error) { showMessage(error.message, "error", "promotionMessage"); }
-  });
+  const promotionForm = document.getElementById("promotionForm");
+  if (promotionForm) {
+    const identifierInput = document.getElementById("promotionIdentifier");
+    const departmentSelect = document.getElementById("promotionDepartment");
+    const submitButton = promotionForm.querySelector('button[type="submit"]');
+    const removeButton = document.getElementById("removeAdminButton");
+    let lookupTimer;
+    let lookupSequence = 0;
+
+    const showPromoteAction = () => {
+      submitButton.hidden = false;
+      removeButton.hidden = true;
+      removeButton.disabled = false;
+      removeButton.textContent = "Remove as admin";
+    };
+
+    const lookUpAccount = async (identifier = identifierInput.value.trim()) => {
+      const sequence = ++lookupSequence;
+      showPromoteAction();
+      if (!identifier) { clearMessage("promotionMessage"); return null; }
+      try {
+        const data = await api(`/admin/users/${encodeURIComponent(identifier)}`);
+        if (sequence !== lookupSequence) return null;
+        const account = data.user;
+        if (account.role === "department_admin") {
+          submitButton.hidden = true;
+          removeButton.hidden = false;
+          showMessage(`${account.roll_or_employee_id} already has ${account.department} department admin access.`, "success", "promotionMessage");
+        } else if (account.role === "admin") {
+          submitButton.hidden = true;
+          removeButton.hidden = false;
+          removeButton.disabled = true;
+          removeButton.textContent = "Primary admin protected";
+          showMessage("Admin-001 is the primary administrator and cannot be removed.", "error", "promotionMessage");
+        } else {
+          showMessage(`${account.roll_or_employee_id} is a ${account.role} account and can be assigned.`, "success", "promotionMessage");
+        }
+        return account;
+      } catch (error) {
+        if (sequence !== lookupSequence) return null;
+        showPromoteAction();
+        if (error.status === 404) showMessage("No account found with that roll/employee ID or email.", "error", "promotionMessage");
+        else showMessage(error.message, "error", "promotionMessage");
+        return null;
+      }
+    };
+
+    identifierInput.addEventListener("input", () => {
+      window.clearTimeout(lookupTimer);
+      lookupSequence++;
+      showPromoteAction();
+      lookupTimer = window.setTimeout(() => lookUpAccount(), 350);
+    });
+
+    promotionForm.addEventListener("submit", async event => {
+      event.preventDefault();
+      window.clearTimeout(lookupTimer);
+      const identifier = identifierInput.value.trim();
+      const department = departmentSelect.value;
+      if (!identifier) { showMessage("Enter a roll/employee ID or email.", "error", "promotionMessage"); identifierInput.focus(); return; }
+      if (!department) { showMessage("Choose a department.", "error", "promotionMessage"); departmentSelect.focus(); return; }
+      clearMessage("promotionMessage");
+      try {
+        submitButton.disabled = true;
+        submitButton.textContent = "Checking account…";
+        showMessage("Checking account…", "success", "promotionMessage");
+        const account = await lookUpAccount(identifier);
+        if (!account || account.role === "department_admin" || account.role === "admin") return;
+        submitButton.disabled = true;
+        submitButton.hidden = false;
+        submitButton.textContent = "Assigning…";
+        const data = await api(`/admin/users/${encodeURIComponent(identifier)}/promote?department=${encodeURIComponent(department)}`, { method: "PUT" });
+        showMessage(`${data.user.roll_or_employee_id} is now a ${department} department admin. Their existing password is unchanged.`, "success", "promotionMessage");
+        promotionForm.reset();
+        lookupSequence++;
+        showPromoteAction();
+      } catch (error) {
+        showMessage(error.message, "error", "promotionMessage");
+      } finally {
+        submitButton.disabled = false;
+        submitButton.textContent = "Assign department admin";
+      }
+    });
+
+    removeButton.addEventListener("click", async () => {
+      const identifier = identifierInput.value.trim();
+      if (!identifier) { showMessage("Enter the department admin's ID or email first.", "error", "promotionMessage"); return; }
+      try {
+        removeButton.disabled = true;
+        removeButton.textContent = "Removing…";
+        showMessage("Removing department admin access…", "success", "promotionMessage");
+        const data = await api(`/admin/users/${encodeURIComponent(identifier)}/demote`, { method: "PUT" });
+        showMessage(data.message, "success", "promotionMessage");
+        promotionForm.reset();
+        lookupSequence++;
+        showPromoteAction();
+      } catch (error) {
+        showMessage(error.message, "error", "promotionMessage");
+        removeButton.disabled = false;
+        removeButton.textContent = "Remove as admin";
+      }
+    });
+  }
   await loadAdmin();
 }
 
+function initializePasswordVisibility() {
+  const eyeIcon = '<svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12Z"></path><circle cx="12" cy="12" r="3"></circle></svg>';
+  const eyeOffIcon = '<svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="m3 3 18 18M10.6 10.6a2 2 0 0 0 2.8 2.8"></path><path d="M9.9 5.2A10.7 10.7 0 0 1 12 5c6.4 0 10 7 10 7a15.8 15.8 0 0 1-3.1 3.9M6.2 6.2C3.5 8 2 12 2 12s3.6 7 10 7a10 10 0 0 0 4-.8"></path></svg>';
+
+  document.querySelectorAll('input[type="password"]').forEach(input => {
+    const wrapper = document.createElement("div");
+    wrapper.className = "password-input-wrap";
+    input.parentNode.insertBefore(wrapper, input);
+    wrapper.appendChild(input);
+
+    const toggle = document.createElement("button");
+    toggle.type = "button";
+    toggle.className = "password-toggle";
+    toggle.setAttribute("aria-label", "Show password");
+    toggle.setAttribute("aria-pressed", "false");
+    toggle.title = "Show password";
+    toggle.innerHTML = eyeIcon;
+    toggle.addEventListener("click", () => {
+      const showPassword = input.type === "password";
+      input.type = showPassword ? "text" : "password";
+      toggle.setAttribute("aria-label", showPassword ? "Hide password" : "Show password");
+      toggle.setAttribute("aria-pressed", String(showPassword));
+      toggle.title = showPassword ? "Hide password" : "Show password";
+      toggle.innerHTML = showPassword ? eyeOffIcon : eyeIcon;
+      input.focus();
+    });
+    wrapper.appendChild(toggle);
+  });
+}
+
 document.addEventListener("DOMContentLoaded", () => {
+  initializePasswordVisibility();
+  initializeStatusSelects();
   const page = document.body.dataset.page;
-  if (page === "login") initializeLogin();
+  if (["login", "admin-login", "department-login"].includes(page)) initializeLogin();
   if (page === "register") initializeRegister();
   if (page === "dashboard") initializeDashboard();
   if (page === "complaint") initializeComplaint();
   if (page === "track") initializeTrack();
   if (page === "admin") initializeAdmin();
+  if (page === "department") initializeAdmin();
 });
