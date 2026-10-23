@@ -1,10 +1,11 @@
 // CampusCare's entire browser-side behavior lives here so the HTML/CSS can be redesigned freely.
-const API_BASE = "http://127.0.0.1:5001/api";
+const API_BASE = "http://127.0.0.1:5000/api";
 const BACKEND_BASE = API_BASE.replace(/\/api$/, "");
 let currentUser = readStoredUser();
 let adminComplaints = [];
 let selectedComplaintId = null;
 let adminDepartmentScope = null;
+let latestNotifications = [];
 
 const DEPARTMENT_SLUGS = {
   "Maintenance": "maintenance",
@@ -107,13 +108,64 @@ function showToast(message) {
   showToast.timer = window.setTimeout(() => toast.classList.remove("show"), 3000);
 }
 
+function notificationMarkup(notification) {
+  return `<article class="notification-item${notification.read ? "" : " unread"}"><p>${escapeHtml(notification.message)}</p><span>${formatDate(notification.created_at)}</span></article>`;
+}
+
+function renderNotifications() {
+  const unread = latestNotifications.filter(notification => !notification.read).length;
+  const button = document.getElementById("notificationButton");
+  const count = document.getElementById("notificationCount");
+  const menu = document.getElementById("notificationMenu");
+  const trackedList = document.getElementById("studentNotifications");
+  const trackedCount = document.getElementById("studentNotificationCount");
+  if (count) {
+    count.textContent = unread ? String(unread) : "";
+    count.hidden = !unread;
+  }
+  if (button) button.setAttribute("aria-label", unread ? `${unread} unread notifications` : "Notifications");
+  const content = latestNotifications.length
+    ? latestNotifications.map(notificationMarkup).join("")
+    : emptyState("No notifications", "Status updates and overdue alerts will appear here.");
+  if (menu) menu.innerHTML = `<div class="notification-menu-heading"><strong>Notifications</strong>${unread ? '<button id="markNotificationsRead" class="button button-secondary button-small" type="button">Mark all read</button>' : ""}</div><div class="notification-list">${content}</div>`;
+  if (trackedList) trackedList.innerHTML = content;
+  if (trackedCount) trackedCount.textContent = unread ? `${unread} unread` : `${latestNotifications.length} total`;
+  const markRead = document.getElementById("markNotificationsRead");
+  if (markRead) markRead.addEventListener("click", markAllNotificationsRead);
+}
+
+async function markAllNotificationsRead() {
+  try {
+    await api("/notifications/read", { method: "PUT", body: JSON.stringify({}) });
+    latestNotifications = latestNotifications.map(notification => ({ ...notification, read: true }));
+    renderNotifications();
+  } catch (error) { showToast(error.message); }
+}
+
+async function loadNotifications() {
+  if (!currentUser) return;
+  try {
+    const data = await api("/notifications");
+    latestNotifications = data.notifications;
+    renderNotifications();
+  } catch (_error) {
+    // Notifications are supplementary; do not interrupt the main page if they fail.
+  }
+}
+
 function renderNavigation() {
   const nav = document.getElementById("appNav");
   if (!nav || !currentUser) return;
   const navigation = currentUser.role === "admin" || currentUser.role === "department_admin"
     ? `<a class="button button-secondary button-small" href="${currentUser.role === "admin" ? appPageUrl("dashboard.html") : departmentDashboardUrl(currentUser.department)}">Dashboard</a>`
     : `<a class="button button-secondary button-small" href="complaint.html">Complaint</a><a class="button button-secondary button-small" href="track.html">Track</a>`;
-  nav.innerHTML = `<span class="nav-user">${escapeHtml(currentUser.name)}</span>${navigation}<button id="logoutButton" class="button button-small" type="button">Log out</button>`;
+  nav.innerHTML = `<span class="nav-user">${escapeHtml(currentUser.name)}</span>${navigation}<div class="notification-control"><button id="notificationButton" class="button button-secondary button-small" type="button" aria-expanded="false">Alerts <span id="notificationCount" class="notification-count" hidden></span></button><div id="notificationMenu" class="notification-menu" hidden></div></div><button id="logoutButton" class="button button-small" type="button">Log out</button>`;
+  document.getElementById("notificationButton").addEventListener("click", () => {
+    const menu = document.getElementById("notificationMenu");
+    const open = menu.hidden;
+    menu.hidden = !open;
+    document.getElementById("notificationButton").setAttribute("aria-expanded", String(open));
+  });
   document.getElementById("logoutButton").addEventListener("click", () => {
     clearSession();
     window.location.href = appPageUrl("index.html");
@@ -130,6 +182,8 @@ async function requireUser(allowedRoles) {
       return null;
     }
     renderNavigation();
+    loadNotifications();
+    window.setInterval(loadNotifications, 60 * 1000);
     return currentUser;
   } catch (_error) {
     clearSession();
@@ -301,6 +355,7 @@ async function initializeTrack() {
   } catch (error) {
     result.innerHTML = emptyState("Could not load complaints", error.message);
   }
+  await loadNotifications();
 }
 
 function adminRow(complaint) {

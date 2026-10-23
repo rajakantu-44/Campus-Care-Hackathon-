@@ -58,6 +58,7 @@ h1, h2, h3, p { margin-top: 0; }
 .brand-mark { align-items: center; background: var(--brand); border-radius: 8px; color: white; display: inline-flex; font-size: .72rem; font-weight: 800; height: 29px; justify-content: center; letter-spacing: .04em; width: 29px; }
 .site-nav, .app-nav { align-items: center; display: flex; flex-wrap: wrap; gap: 6px; justify-content: flex-end; min-width: 0; }
 .nav-user { color: var(--muted); display: none; font-size: .9rem; }
+.notification-control { position: relative; }.notification-count { align-items: center; background: var(--danger); border-radius: 99px; color: white; display: inline-flex; font-size: .68rem; height: 17px; justify-content: center; margin-left: 2px; min-width: 17px; padding: 0 4px; }.notification-menu { background: white; border: 1px solid var(--line); border-radius: 10px; box-shadow: var(--shadow); max-height: min(420px, 70vh); overflow: auto; padding: 11px; position: absolute; right: 0; top: calc(100% + 7px); width: min(360px, calc(100vw - 24px)); z-index: 30; }.notification-menu-heading { align-items: center; display: flex; gap: 8px; justify-content: space-between; margin-bottom: 9px; }.notification-list { display: grid; gap: 8px; }.notification-item { background: var(--canvas); border: 1px solid var(--line); border-radius: 8px; padding: 9px 10px; }.notification-item.unread { border-left: 3px solid var(--brand); }.notification-item p { font-size: .86rem; margin: 0 0 4px; }.notification-item span { color: var(--muted); font-size: .75rem; }.notifications-card { margin-top: 18px; }
 
 .button {
   align-items: center;
@@ -92,7 +93,7 @@ h1, h2, h3, p { margin-top: 0; }
 .flow-number { align-items: center; background: var(--aqua); border-radius: 50%; color: var(--brand-dark); display: inline-flex; flex: 0 0 auto; font-size: .85rem; font-weight: 800; height: 30px; justify-content: center; width: 30px; }
 .flow-item strong { display: block; }.flow-item span { color: var(--muted); font-size: .9rem; }
 .home-footer { color: var(--muted); font-size: .9rem; padding: 20px; text-align: center; }
-body[data-page="home"] { background: url("assets/brown-pastel-aesthetic-379r48zf0xa66b3k-885827612.jpg") center / cover fixed no-repeat; }
+body[data-page="home"] { background: url("https://external-content.duckduckgo.com/iu/?u=https%3A%2F%2Fpbsiddhartha.ac.in%2Fimages%2F13.jpg&f=1&nofb=1&ipt=d4e50b9f42ffce08fd48b48b1c2122404c48e26357db8b8da0cfaa5102168aea&ipo=images") center / cover fixed no-repeat; }
 
 .auth-page { align-items: center; display: flex; justify-content: center; min-height: 100vh; padding: 16px 13px; }
 .auth-card { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; box-shadow: var(--shadow); max-width: 475px; padding: 21px; width: 100%; }
@@ -180,6 +181,10 @@ body > * { position: relative; z-index: 1; }
 .hero::before { background: linear-gradient(135deg, rgba(254, 243, 226, .84), rgba(254, 243, 226, .3)); border: 1px solid rgba(254, 243, 226, .78); border-radius: 28px; box-shadow: var(--shadow); content: ""; inset: 22px 0 0; position: absolute; z-index: -1; }
 .hero::after { background: linear-gradient(135deg, rgba(244, 174, 82, 0), rgba(212, 97, 26, 0)); filter: blur(1px); opacity: .8; }
 .eyebrow { color: var(--brand); }.hero h1 { text-shadow: 0 7px 22px rgba(42, 26, 14, .1); }
+body[data-page="home"] .hero::before { background: linear-gradient(135deg, rgba(254, 243, 226, .94), rgba(254, 243, 226, .76)); }
+body[data-page="home"] .hero h1 { color: #2a1a0e; }
+body[data-page="home"] .hero-copy { color: #4b3526; font-weight: 500; }
+body[data-page="home"] .home-footer { color: #fffaf2; text-shadow: 0 1px 4px rgba(42, 26, 14, .72); }
 .flow-item, .content-card, .stat-card, .detail-card, .auth-card, .recommendation { background: rgba(254, 243, 226, .72); border-color: rgba(254, 243, 226, .88); box-shadow: 0 12px 30px rgba(42, 26, 14, .08); backdrop-filter: blur(14px) saturate(135%); -webkit-backdrop-filter: blur(14px) saturate(135%); }
 .flow-item, .content-card, .stat-card, .complaint-row, .admin-row, .detail-card { transition: border-color .25s ease, box-shadow .25s ease, transform .25s ease; }
 .flow-item:hover, .content-card:hover, .stat-card:hover, .complaint-row:hover, .admin-row:hover { border-color: rgba(212, 98, 26, .35); box-shadow: 0 16px 34px rgba(42, 26, 14, .11); }
